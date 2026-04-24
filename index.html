@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>バグ｜タスク 管理画面</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./app.css?v=20251001-1" />
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="./config.example.js?v=20251001-1"></script>
+    <script defer src="./app.js?v=20251001-1"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="topbar">
+        <div class="topbar-inner">
+          <div class="entity-tabs" role="tablist" aria-label="対象切替">
+          <button class="entity-tab is-active" data-entity="bug" type="button" role="tab" aria-selected="true">🐞 バグ</button>
+          <button class="entity-tab" data-entity="task" type="button" role="tab" aria-selected="false">📝 タスク</button>
+          </div>
+          <div class="topbar-actions">
+            <button id="sheetButton" class="icon-button" type="button" aria-label="シートを開く">▦</button>
+            <button id="reloadButton" class="icon-button icon-button-primary" type="button" aria-label="更新">↻</button>
+          </div>
+        </div>
+      </section>
+
+      <main class="layout">
+        <section class="content-stack">
+          <section id="summaryPanel" class="panel panel-summary">
+            <div class="section-heading">
+              <h2 id="summaryHeading">集計</h2>
+              <p id="summarySubheading">チップをタップして一覧を絞り込み</p>
+            </div>
+            <div id="summaryMount" class="summary-grid"></div>
+          </section>
+
+          <section id="listPanel" class="panel panel-main">
+            <div class="section-heading">
+              <h2 id="listHeading">一覧</h2>
+              <p id="listSubheading">タップで詳細を開く</p>
+            </div>
+            <div id="listMount" class="record-list"></div>
+          </section>
+        </section>
+
+        <aside id="detailPanel" class="detail-sheet" aria-hidden="true">
+          <div class="detail-sheet-head">
+            <div>
+              <h2>詳細</h2>
+            </div>
+            <button id="detailCloseButton" class="icon-button" type="button" aria-label="詳細を閉じる">✕</button>
+          </div>
+          <div id="detailMount" class="detail-sheet-body detail-empty">
+            <p>一覧から項目を選ぶとここに詳細が出ます。</p>
+          </div>
+        </aside>
+      </main>
+
+      <div id="detailOverlay" class="detail-overlay"></div>
+
+      <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+        <div class="loading-card">
+          <div class="loading-spinner"></div>
+          <p id="loadingLabel">読み込み中...</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
