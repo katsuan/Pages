@@ -27,7 +27,6 @@
     summary: null,
     histories: [],
     detail: null,
-    detailDraft: null,
     links: {},
     profileId: '',
     loadingCount: 0,
@@ -83,7 +82,6 @@
           view: 'dashboard',
           selectedId: '',
           detail: null,
-          detailDraft: null,
           filterType: '',
           filterValue: '',
         });
@@ -353,7 +351,6 @@
       event.preventDefault();
       submitDetailForm_(card, record).catch(showFatalError_);
     });
-    bindDetailDirtyTracking_(card);
 
     const headline = document.createElement('div');
     headline.className = 'detail-headline';
@@ -445,7 +442,6 @@
   function setDetailRecord_(record, itemId) {
     updateNavigationState_({
       detail: record,
-      detailDraft: createDetailDraftFromRecord_(record),
       selectedId: itemId || (record && record.id) || '',
     });
   }
@@ -458,7 +454,6 @@
     updateNavigationState_({
       selectedId: '',
       detail: null,
-      detailDraft: null,
     });
     setDetailOpen_(false);
   }
@@ -953,7 +948,6 @@
     state.summary = null;
     state.histories = [];
     state.detail = null;
-    state.detailDraft = null;
     state.selectedId = '';
     state.links = {};
     state.errorMessage = message;
@@ -1008,6 +1002,38 @@
     const formData = new FormData(form);
     const nextStatus = String(formData.get('status') || '');
     const shouldReport = String(formData.get('lineReport') || '') === 'true';
+
+    if (!hasPersistedDetailChanges_(form, record) && !shouldReport) {
+      await closeDetailAfterSave_();
+      return;
+    }
+
+    const response = await requestApi_(buildDetailUpdatePayload_(formData, record));
+    const savedRecord = response.data.record;
+    if (shouldReport && isDoneStatus_(nextStatus)) {
+      await sendCompletionReport_(savedRecord);
+    }
+    await closeDetailAfterSave_();
+  }
+
+  /**
+   * 詳細保存後の共通 close 処理
+   * 一覧再取得前に選択状態を外して、PC/スマホとも一覧へ戻す。
+   */
+  async function closeDetailAfterSave_() {
+    clearDetailSelection_();
+    renderEmptyDetail_(getDefaultDetailEmptyMessage_());
+    await loadCurrentView_();
+  }
+
+  /**
+   * 詳細フォームから API 更新 payload を組み立てる
+   *
+   * @param {FormData} formData
+   * @param {Object} record
+   * @returns {Object}
+   */
+  function buildDetailUpdatePayload_(formData, record) {
     const payload = {
       api: 'update',
       entity: record.entityType,
@@ -1015,7 +1041,7 @@
       title: String(formData.get('title') || '').trim(),
       detail: String(formData.get('detail') || ''),
       memo: String(formData.get('memo') || ''),
-      status: nextStatus,
+      status: String(formData.get('status') || ''),
       priority: String(formData.get('priority') || ''),
       changedBy: state.profileId || 'liff-user',
     };
@@ -1025,21 +1051,7 @@
       payload.assignee = String(formData.get('assignee') || '').trim();
     }
 
-    if (!hasPersistedDetailChanges_(form, record) && !shouldReport) {
-      clearDetailSelection_();
-      renderEmptyDetail_(getDefaultDetailEmptyMessage_());
-      await loadCurrentView_();
-      return;
-    }
-
-    const response = await requestApi_(payload);
-    const savedRecord = response.data.record;
-    if (shouldReport && isDoneStatus_(nextStatus)) {
-      await sendCompletionReport_(savedRecord);
-    }
-    clearDetailSelection_();
-    renderEmptyDetail_(getDefaultDetailEmptyMessage_());
-    await loadCurrentView_();
+    return payload;
   }
 
   function requestApi_(params) {
@@ -1310,36 +1322,6 @@
     return String(value || '').trim();
   }
 
-  function createDetailDraftFromRecord_(record) {
-    if (!record) return null;
-    return {
-      title: String(record.title || ''),
-      detail: String(record.detail || ''),
-      memo: String(record.memo || ''),
-      status: String(record.status || ''),
-      priority: String(record.priority || ''),
-      dueDate: String(record.dueDate || ''),
-      assignee: String(record.assignee || ''),
-      lineReport: 'false',
-    };
-  }
-
-  /**
-   * フォーム dirty 判定を行うための監視を設定する
-   */
-  function bindDetailDirtyTracking_(form) {
-    form.dataset.initialSnapshot = buildDetailFormSnapshot_(form);
-    form.addEventListener('input', syncDetailDraftFromForm_);
-    form.addEventListener('change', syncDetailDraftFromForm_);
-    form.addEventListener('togglechange', syncDetailDraftFromForm_);
-  }
-
-  function syncDetailDraftFromForm_(event) {
-    const form = event && event.currentTarget ? event.currentTarget : event && event.target ? event.target.form : null;
-    if (!form) return;
-    state.detailDraft = getDetailDraftFromForm_(form);
-  }
-
   function getDetailDraftFromForm_(form) {
     const formData = new FormData(form);
     return {
@@ -1352,10 +1334,6 @@
       assignee: String(formData.get('assignee') || ''),
       lineReport: String(formData.get('lineReport') || 'false'),
     };
-  }
-
-  function buildDetailFormSnapshot_(form) {
-    return JSON.stringify(getDetailDraftFromForm_(form));
   }
 
   function hasDirtyDetailForm_() {
