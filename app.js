@@ -664,9 +664,7 @@
       }
 
       if (part.plainText) {
-        const span = document.createElement('span');
-        span.textContent = part.text;
-        mount.append(span);
+        mount.append(document.createTextNode(part.text));
         return;
       }
 
