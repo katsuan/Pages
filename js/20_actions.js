@@ -30,26 +30,12 @@ function getFilteredRecords_() {
   });
 }
 
-function getInitialEntity_() {
-  const query = getQueryParam_('entity');
-  if (query === 'task') return 'task';
-  return ((window.APP_CONFIG && window.APP_CONFIG.defaultEntity) || 'bug') === 'task' ? 'task' : 'bug';
-}
-
-function getInitialView_() {
-  return getQueryParam_('view') === 'history' ? 'history' : 'dashboard';
-}
-
 function getStatusOptions_(entityType) {
   return (STATUS_OPTIONS[entityType] || STATUS_OPTIONS.bug).map(toOption_);
 }
 
 function getPriorityOptions_() {
   return PRIORITY_OPTIONS.map(toOption_);
-}
-
-function getQueryParam_(name) {
-  return new URLSearchParams(window.location.search).get(name) || '';
 }
 
 function syncUrl_() {

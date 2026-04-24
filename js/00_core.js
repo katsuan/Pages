@@ -75,6 +75,36 @@ const elements = {
 };
 
 /**
+ * 初期 entity
+ *
+ * @returns {string}
+ */
+function getInitialEntity_() {
+  const query = getQueryParam_('entity');
+  if (query === 'task') return 'task';
+  return ((window.APP_CONFIG && window.APP_CONFIG.defaultEntity) || 'bug') === 'task' ? 'task' : 'bug';
+}
+
+/**
+ * 初期 view
+ *
+ * @returns {string}
+ */
+function getInitialView_() {
+  return getQueryParam_('view') === 'history' ? 'history' : 'dashboard';
+}
+
+/**
+ * query parameter 取得
+ *
+ * @param {string} name
+ * @returns {string}
+ */
+function getQueryParam_(name) {
+  return new URLSearchParams(window.location.search).get(name) || '';
+}
+
+/**
  * 初期化入口
  * イベント購読、URL同期、LIFF初期化、初回ロードを順に行う。
  */
