@@ -12,6 +12,8 @@
   const DETAIL_EMPTY_MESSAGE = '一覧から項目を選ぶとここに詳細が出ます。';
   const DETAIL_EMPTY_NO_RECORDS_MESSAGE = '表示対象の未完了データはありません。';
   const DETAIL_EMPTY_HISTORY_MESSAGE = '履歴は一覧で確認できます。';
+  const DEFAULT_LIST_LIMIT = 12;
+  const FILTERED_LIST_LIMIT = 40;
 
   /**
    * 画面状態
@@ -21,14 +23,16 @@
     entity: getInitialEntity_(),
     view: getInitialView_(),
     selectedId: getQueryParam_('id') || '',
-    filterType: '',
-    filterValue: '',
+    statusFilter: '',
+    priorityFilter: '',
     records: [],
     summary: null,
     histories: [],
     detail: null,
     links: {},
     profileId: '',
+    profileName: '',
+    profilePictureUrl: '',
     accessToken: '',
     loadingCount: 0,
     errorMessage: '',
@@ -53,6 +57,13 @@
     detailCloseButton: document.getElementById('detailCloseButton'),
     reloadButton: document.getElementById('reloadButton'),
     sheetButton: document.getElementById('sheetButton'),
+    profileAnchor: document.getElementById('profileAnchor'),
+    profileButton: document.getElementById('profileButton'),
+    profileAvatar: document.getElementById('profileAvatar'),
+    profileFallback: document.getElementById('profileFallback'),
+    profileMenu: document.getElementById('profileMenu'),
+    profileName: document.getElementById('profileName'),
+    logoutButton: document.getElementById('logoutButton'),
     loadingOverlay: document.getElementById('loadingOverlay'),
     loadingLabel: document.getElementById('loadingLabel'),
   };
@@ -84,8 +95,8 @@
           view: 'dashboard',
           selectedId: '',
           detail: null,
-          filterType: '',
-          filterValue: '',
+          statusFilter: '',
+          priorityFilter: '',
         });
         await loadCurrentView_();
       });
@@ -116,6 +127,29 @@
         requestDetailClose_();
       });
     }
+
+    if (elements.profileButton) {
+      elements.profileButton.addEventListener('click', function (event) {
+        event.stopPropagation();
+        toggleProfileMenu_();
+      });
+    }
+
+    if (elements.profileMenu) {
+      elements.profileMenu.addEventListener('click', function (event) {
+        event.stopPropagation();
+      });
+    }
+
+    if (elements.logoutButton) {
+      elements.logoutButton.addEventListener('click', function () {
+        logoutFromLiff_().catch(showFatalError_);
+      });
+    }
+
+    document.addEventListener('click', function () {
+      setProfileMenuOpen_(false);
+    });
   }
 
   async function initializeLiff_() {
@@ -134,9 +168,12 @@
 
     const profile = await window.liff.getProfile();
     state.profileId = profile.userId || '';
+    state.profileName = profile.displayName || '';
+    state.profilePictureUrl = profile.pictureUrl || '';
     state.accessToken = typeof window.liff.getAccessToken === 'function'
       ? String(window.liff.getAccessToken() || '')
       : '';
+    syncProfileUi_();
     return true;
   }
 
@@ -148,7 +185,7 @@
       }
 
       const results = await Promise.allSettled([
-        requestApi_({ api: 'list', entity: state.entity, limit: 12 }),
+        requestApi_(buildListRequestParams_()),
         requestApi_({ api: 'summary', entity: state.entity, limit: 6 }),
       ]);
       applyDashboardResults_(results[0], results[1]);
@@ -282,7 +319,7 @@
       return createMetricChip_(entry[0], entry[1], {
         sortType: 'status',
         onClick: function () {
-          toggleSort_('status', entry[0]);
+          toggleSort_('status', entry[0]).catch(showFatalError_);
         },
       });
     }), { interactive: true });
@@ -290,7 +327,7 @@
       return createMetricChip_(entry[0], entry[1], {
         sortType: 'priority',
         onClick: function () {
-          toggleSort_('priority', entry[0]);
+          toggleSort_('priority', entry[0]).catch(showFatalError_);
         },
       });
     }), { interactive: true });
@@ -316,7 +353,9 @@
     if (!filteredRecords.length) {
       const empty = document.createElement('div');
       empty.className = 'record-card';
-      empty.textContent = state.filterType ? '条件に合う未完了データはありません。' : '最新の未完了データはありません。';
+      empty.textContent = hasActiveRecordFilters_()
+        ? `条件に合う最新${FILTERED_LIST_LIMIT}件にデータはありません。`
+        : '最新の未完了データはありません。';
       elements.listMount.append(empty);
       return;
     }
@@ -857,13 +896,9 @@
 
   function getFilteredRecords_() {
     const records = (state.records || []).slice();
-
-    if (!state.filterType || !state.filterValue) {
-      return records;
-    }
-
     return records.filter(function (record) {
-      return isRecordMatchedByFilter_(record, state.filterType, state.filterValue);
+      return isRecordMatchedByFilter_(record, 'status', state.statusFilter) &&
+        isRecordMatchedByFilter_(record, 'priority', state.priorityFilter);
     });
   }
 
@@ -907,16 +942,19 @@
     window.history.replaceState({}, '', url.toString());
   }
 
-  function toggleSort_(sortType, sortValue) {
-    const isSame = state.filterType === sortType && state.filterValue === sortValue;
-
-    updateNavigationState_({
+  async function toggleSort_(sortType, sortValue) {
+    const nextState = {
       view: 'dashboard',
-      filterType: isSame ? '' : sortType,
-      filterValue: isSame ? '' : sortValue,
-    });
-    renderSummary_();
-    renderList_();
+    };
+
+    if (sortType === 'status') {
+      nextState.statusFilter = state.statusFilter === sortValue ? '' : sortValue;
+    } else if (sortType === 'priority') {
+      nextState.priorityFilter = state.priorityFilter === sortValue ? '' : sortValue;
+    }
+
+    updateNavigationState_(nextState);
+    await loadCurrentView_();
   }
 
   function syncSectionHeadings_() {
@@ -933,9 +971,13 @@
     }
 
     elements.listHeading.textContent = '一覧';
-    elements.listSubheading.textContent = 'タップで詳細を開く';
+    elements.listSubheading.textContent = hasActiveRecordFilters_()
+      ? `状態×優先度の条件に合う最新${FILTERED_LIST_LIMIT}件を表示`
+      : 'タップで詳細を開く';
     elements.summaryHeading.textContent = '集計';
-    elements.summarySubheading.textContent = 'チップをタップして一覧を絞り込み';
+    elements.summarySubheading.textContent = hasActiveRecordFilters_()
+      ? '状態と優先度を掛け合わせて確認中'
+      : 'チップをタップして一覧を絞り込み';
   }
 
   function setPanelVisibility_(showSummary) {
@@ -1125,7 +1167,69 @@
 
   function showFatalError_(error) {
     console.error(error);
+    setProfileMenuOpen_(false);
     applyLoadErrorState_(error);
+  }
+
+  /**
+   * プロフィール UI を LIFF profile 情報に同期する
+   */
+  function syncProfileUi_() {
+    if (!elements.profileAnchor || !elements.profileButton || !elements.profileName) {
+      return;
+    }
+
+    const visible = !!(state.profileId || state.profileName);
+    elements.profileAnchor.hidden = !visible;
+    if (!visible) {
+      setProfileMenuOpen_(false);
+      return;
+    }
+
+    elements.profileName.textContent = state.profileName || state.profileId || '-';
+
+    if (elements.profileAvatar && elements.profileFallback) {
+      if (state.profilePictureUrl) {
+        elements.profileAvatar.hidden = false;
+        elements.profileAvatar.src = state.profilePictureUrl;
+        elements.profileFallback.hidden = true;
+      } else {
+        elements.profileAvatar.hidden = true;
+        elements.profileAvatar.removeAttribute('src');
+        elements.profileFallback.hidden = false;
+      }
+    }
+  }
+
+  /**
+   * プロフィールメニュー開閉
+   *
+   * @param {boolean} isOpen
+   */
+  function setProfileMenuOpen_(isOpen) {
+    if (!elements.profileMenu || !elements.profileButton) return;
+
+    elements.profileMenu.hidden = !isOpen;
+    elements.profileButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+
+  function toggleProfileMenu_() {
+    if (!elements.profileMenu) return;
+    setProfileMenuOpen_(elements.profileMenu.hidden);
+  }
+
+  /**
+   * LIFF ログアウト
+   * ログアウト後は同じ画面を再読込して、必要なら login へ戻す。
+   */
+  async function logoutFromLiff_() {
+    setProfileMenuOpen_(false);
+
+    if (window.liff && typeof window.liff.logout === 'function') {
+      window.liff.logout();
+    }
+
+    window.location.reload();
   }
 
   /**
@@ -1323,6 +1427,10 @@
   }
 
   function isRecordMatchedByFilter_(record, sortType, sortValue) {
+    if (!sortValue) {
+      return true;
+    }
+
     if (sortType === 'status') {
       return String(record.status || '') === String(sortValue || '');
     }
@@ -1335,7 +1443,39 @@
   }
 
   function isActiveSort_(sortType, sortValue) {
-    return state.filterType === sortType && state.filterValue === sortValue;
+    if (sortType === 'status') {
+      return state.statusFilter === sortValue;
+    }
+
+    if (sortType === 'priority') {
+      return state.priorityFilter === sortValue;
+    }
+
+    return false;
+  }
+
+  /**
+   * 一覧 API の取得条件を組み立てる
+   * チップで絞り込む時だけ完了済みも含め、取得件数も広げる。
+   *
+   * @returns {Object}
+   */
+  function buildListRequestParams_() {
+    return {
+      api: 'list',
+      entity: state.entity,
+      includeDone: hasActiveRecordFilters_(),
+      limit: hasActiveRecordFilters_() ? FILTERED_LIST_LIMIT : DEFAULT_LIST_LIMIT,
+    };
+  }
+
+  /**
+   * 状態/優先度いずれかのフィルターが有効か
+   *
+   * @returns {boolean}
+   */
+  function hasActiveRecordFilters_() {
+    return !!(state.statusFilter || state.priorityFilter);
   }
 
   function isDoneStatus_(status) {

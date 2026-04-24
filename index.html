@@ -26,6 +26,19 @@
           <div class="topbar-actions">
             <button id="sheetButton" class="icon-button" type="button" aria-label="シートを開く">▦</button>
             <button id="reloadButton" class="icon-button icon-button-primary" type="button" aria-label="更新">↻</button>
+            <div id="profileAnchor" class="profile-anchor" hidden>
+              <button id="profileButton" class="avatar-button" type="button" aria-label="ユーザー情報を開く" aria-haspopup="menu" aria-expanded="false">
+                <img id="profileAvatar" class="avatar-image" alt="" hidden />
+                <span id="profileFallback" class="avatar-fallback">人</span>
+              </button>
+              <div id="profileMenu" class="profile-menu" hidden>
+                <div class="profile-menu-card">
+                  <p class="profile-menu-label">ログイン中</p>
+                  <strong id="profileName" class="profile-menu-name">-</strong>
+                </div>
+                <button id="logoutButton" class="profile-menu-action" type="button">ログアウト</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
