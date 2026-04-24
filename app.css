@@ -485,6 +485,22 @@ p {
   font-weight: 500;
 }
 
+.detail-meta-list {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.detail-meta-list .meta-row {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.detail-meta-list .meta-row strong {
+  text-align: right;
+}
+
 .detail-field {
   display: grid;
   gap: 6px;

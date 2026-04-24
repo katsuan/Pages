@@ -369,10 +369,10 @@
     appendRecordMetaParts_(headline, record);
 
     const meta = document.createElement('div');
-    meta.className = 'meta-list meta-list-muted';
+    meta.className = 'meta-list meta-list-muted detail-meta-list';
     meta.append(
-      createMetaRow_('更新', record.updatedAt),
-      createMetaRow_('作成', record.createdAt)
+      createMetaRow_('作成', record.createdAt),
+      createMetaRow_('更新', record.updatedAt)
     );
 
     card.append(
