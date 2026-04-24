@@ -96,3 +96,21 @@
     justify-content: flex-end;
   }
 }
+
+@media (max-width: 519px) {
+  .topbar-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 44px);
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .profile-menu {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 156px);
+    left: 14px;
+    right: 14px;
+    min-width: 0;
+    width: auto;
+  }
+}
