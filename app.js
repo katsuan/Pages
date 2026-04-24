@@ -29,6 +29,7 @@
     detail: null,
     links: {},
     profileId: '',
+    accessToken: '',
     loadingCount: 0,
     errorMessage: '',
     listErrorMessage: '',
@@ -65,7 +66,8 @@
   async function initialize_() {
     bindEvents_();
     updateNavigationState_();
-    await initializeLiff_();
+    const ready = await initializeLiff_();
+    if (ready === false) return;
     await loadCurrentView_();
   }
 
@@ -118,14 +120,24 @@
 
   async function initializeLiff_() {
     const liffId = (window.APP_CONFIG && window.APP_CONFIG.liffId) || '';
-    if (!window.liff || !liffId) return;
+    if (!window.liff || !liffId) return true;
 
     await window.liff.init({ liffId: liffId });
 
-    if (window.liff.isLoggedIn()) {
-      const profile = await window.liff.getProfile();
-      state.profileId = profile.userId || '';
+    if (!window.liff.isLoggedIn()) {
+      if (typeof window.liff.login === 'function') {
+        window.liff.login({ redirectUri: window.location.href });
+        return false;
+      }
+      throw new Error('LINEログインが必要です。');
     }
+
+    const profile = await window.liff.getProfile();
+    state.profileId = profile.userId || '';
+    state.accessToken = typeof window.liff.getAccessToken === 'function'
+      ? String(window.liff.getAccessToken() || '')
+      : '';
+    return true;
   }
 
   async function loadCurrentView_() {
@@ -1062,14 +1074,16 @@
 
     return withLoading_(jsonpRequest_(baseUrl, Object.assign({
       _ts: Date.now(),
-    }, params)), buildLoadingLabel_(params));
+      userId: state.profileId || '',
+      accessToken: state.accessToken || '',
+    }, params), getApiTimeoutMs_(params)), buildLoadingLabel_(params));
   }
 
   /**
    * JSONP リクエスト
    * GitHub Pages / LIFF から GAS WebApp を叩くための最小実装。
    */
-  function jsonpRequest_(baseUrl, params) {
+  function jsonpRequest_(baseUrl, params, timeoutMs) {
     return new Promise(function (resolve, reject) {
       const callbackName = `__bugsheet_cb_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
       const url = new URL(baseUrl);
@@ -1084,7 +1098,7 @@
       const timeoutId = window.setTimeout(function () {
         cleanup_();
         reject(new Error('API 応答がタイムアウトしました。'));
-      }, 20000);
+      }, timeoutMs || 20000);
 
       window[callbackName] = function (payload) {
         cleanup_();
@@ -1240,6 +1254,24 @@
         return '保存中...';
       default:
         return '読み込み中...';
+    }
+  }
+
+  /**
+   * API ごとの待ち時間
+   * 集計は Spreadsheet 読み込みと集約で遅くなりやすいため、少し長めにする。
+   *
+   * @param {Object} params
+   * @returns {number}
+   */
+  function getApiTimeoutMs_(params) {
+    const api = String((params && params.api) || '');
+
+    switch (api) {
+      case 'summary':
+        return 30000;
+      default:
+        return 20000;
     }
   }
 
