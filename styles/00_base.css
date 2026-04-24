@@ -1,0 +1,43 @@
+:root {
+  --bg: #f3efe7;
+  --bg-accent: #e7ded0;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-strong: #ffffff;
+  --surface-soft: #f6f1e8;
+  --surface-deep: #f0e7d8;
+  --line: rgba(39, 32, 25, 0.1);
+  --text: #1f1a17;
+  --muted: #6b625b;
+  --primary: #2f6c5f;
+  --primary-strong: #204d43;
+  --danger: #8e3b2e;
+  --shadow: 0 22px 55px rgba(54, 40, 20, 0.12);
+  --radius: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-family: 'Noto Sans JP', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(112, 153, 137, 0.22), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(232, 172, 102, 0.18), transparent 20%),
+    linear-gradient(160deg, var(--bg) 0%, #f8f5ef 48%, var(--bg-accent) 100%);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}

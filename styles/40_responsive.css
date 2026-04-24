@@ -1,0 +1,98 @@
+@media (min-width: 860px) {
+  .app-shell {
+    max-width: 1180px;
+    padding: 18px 18px 32px;
+  }
+
+  .topbar {
+    padding: 10px;
+  }
+
+  .topbar-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .layout.has-detail-open {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .entity-tabs {
+    grid-template-columns: repeat(2, minmax(0, 156px));
+    justify-content: start;
+  }
+
+  .metric-chip {
+    display: grid;
+    gap: 6px;
+    min-width: 72px;
+    padding: 8px 10px;
+  }
+
+  .metric-topline {
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .metric-label {
+    display: block;
+  }
+
+  .detail-overlay {
+    display: none;
+  }
+
+  .detail-overlay.is-open {
+    display: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .detail-sheet {
+    display: none;
+    position: sticky;
+    top: 18px;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-top: 0;
+    transform: none;
+    max-height: none;
+    max-width: none;
+    overflow: visible;
+    z-index: auto;
+  }
+
+  .detail-sheet.is-open {
+    display: block;
+  }
+
+  .detail-sheet-body {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 859px) {
+  .topbar-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+  }
+}

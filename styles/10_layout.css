@@ -1,0 +1,81 @@
+.app-shell {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 14px 120px;
+}
+
+.topbar,
+.panel,
+.detail-sheet {
+  backdrop-filter: blur(18px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.layout,
+.content-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.panel {
+  padding: 14px;
+  overflow: hidden;
+}
+
+.content-stack {
+  min-width: 0;
+}
+
+.topbar {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 20px;
+}
+
+.topbar-inner {
+  display: grid;
+  gap: 10px;
+}
+
+.entity-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+.entity-tabs::-webkit-scrollbar,
+.summary-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.section-heading {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.section-heading p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
