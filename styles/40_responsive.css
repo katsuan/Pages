@@ -101,16 +101,20 @@
   .topbar-actions {
     display: grid;
     grid-template-columns: repeat(3, 44px);
-    justify-content: flex-start;
+    width: max-content;
+    justify-content: end;
     align-items: center;
+    justify-self: end;
+    margin-left: auto;
   }
 
   .profile-menu {
-    position: fixed;
-    top: calc(env(safe-area-inset-top, 0px) + 156px);
-    left: 14px;
-    right: 14px;
-    min-width: 0;
-    width: auto;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    min-width: 220px;
+    width: min(280px, calc(100vw - 56px));
+    max-width: calc(100vw - 28px);
   }
 }
