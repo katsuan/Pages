@@ -35,6 +35,8 @@
   margin-bottom: 12px;
   padding: 10px;
   border-radius: 20px;
+  position: relative;
+  z-index: 70;
 }
 
 .topbar-inner {
