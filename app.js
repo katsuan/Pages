@@ -366,7 +366,7 @@
 
     const headline = document.createElement('div');
     headline.className = 'detail-headline';
-    appendRecordMetaParts_(headline, record, 'detail-headline-id');
+    appendRecordMetaParts_(headline, record);
 
     const meta = document.createElement('div');
     meta.className = 'meta-list meta-list-muted';
@@ -638,7 +638,7 @@
   function buildRecordMeta_(record) {
     const meta = document.createElement('div');
     meta.className = 'record-meta';
-    appendRecordMetaParts_(meta, record, 'record-meta-id');
+    appendRecordMetaParts_(meta, record);
 
     return meta;
   }
@@ -649,12 +649,11 @@
    *
    * @param {HTMLElement} mount
    * @param {Object} record
-   * @param {string} idClassName
    * @returns {void}
    */
-  function appendRecordMetaParts_(mount, record, idClassName) {
+  function appendRecordMetaParts_(mount, record) {
     [
-      { className: idClassName, text: normalizeRecordIdDisplay_(record.id) },
+      { className: '', text: normalizeRecordIdDisplay_(record.id), plainText: true },
       { className: '', text: record.status },
       { className: '', text: record.priority },
     ].filter(function (part) {
@@ -664,9 +663,8 @@
         mount.append(createMetaSeparator_());
       }
 
-      if (part.className) {
+      if (part.plainText) {
         const span = document.createElement('span');
-        span.className = part.className;
         span.textContent = part.text;
         mount.append(span);
         return;
